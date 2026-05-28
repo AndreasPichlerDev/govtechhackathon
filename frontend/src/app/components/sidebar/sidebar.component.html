@@ -39,6 +39,26 @@
           </div>
         }
 
+        <!-- Gesamtbewertung -->
+        <div class="overall-score-section">
+          <div class="overall-score-header">
+            <span class="overall-score-label">Gesamtbewertung</span>
+            <span class="overall-score-value" [style.color]="getScoreColor(overallScore)">{{ overallScore }}<span class="score-max">/10</span></span>
+          </div>
+          <div class="score-bar-bg">
+            <div class="score-bar-fill" [style.width.%]="overallScore * 10" [style.background-color]="getScoreColor(overallScore)"></div>
+          </div>
+          @if (compareOverallScore !== null) {
+            <div class="compare-score-row">
+              <span class="compare-score-label">Vergleich:</span>
+              <span class="compare-score-value" [style.color]="getScoreColor(compareOverallScore)">{{ compareOverallScore }}/10</span>
+            </div>
+          }
+        </div>
+
+        <!-- Radar Chart -->
+        <app-radar-chart></app-radar-chart>
+
         <div class="radius-section">
           <div class="radius-header">
             <span class="radius-label">Suchradius</span>
@@ -70,7 +90,14 @@
                 <div class="metric-icon">{{ category.icon }}</div>
                 <div class="metric-info">
                   <span class="metric-label">{{ category.label }}</span>
-                  <span class="metric-value">{{ locationService.metrics()[category.key] }}</span>
+                  <span class="metric-value">
+                    {{ locationService.metrics()[category.key] }}
+                    @if (getDifference(category.key) !== null) {
+                      <span class="metric-diff" [class.positive]="getDifference(category.key)! > 0" [class.negative]="getDifference(category.key)! < 0">
+                        {{ getDifference(category.key)! > 0 ? '+' : '' }}{{ getDifference(category.key) }}
+                      </span>
+                    }
+                  </span>
                 </div>
               </button>
               <button class="visibility-btn" (click)="toggleCategory(category.key)" [attr.aria-label]="'Toggle ' + category.label">
@@ -90,14 +117,41 @@
           }
         </div>
 
-        <!-- Wohnort-Finder Button -->
-        <button class="finder-btn" (click)="openFinder()">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-            <circle cx="12" cy="10" r="3"></circle>
-          </svg>
-          <span>Optimalen Wohnort finden</span>
-        </button>
+        <!-- Action buttons -->
+        <div class="action-buttons">
+          <button class="action-btn compare-btn" (click)="saveCurrentAsCompare()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 3h5v5"></path>
+              <line x1="4" y1="20" x2="21" y2="3"></line>
+              <path d="M21 16v5h-5"></path>
+              <line x1="15" y1="15" x2="21" y2="21"></line>
+              <line x1="4" y1="4" x2="9" y2="9"></line>
+            </svg>
+            @if (compareService.hasComparison()) {
+              <span>Vergleich aktualisieren</span>
+            } @else {
+              <span>Als Vergleich speichern</span>
+            }
+          </button>
+
+          @if (compareService.hasComparison()) {
+            <button class="action-btn clear-compare-btn" (click)="compareService.clearComparison()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+              <span>Vergleich entfernen</span>
+            </button>
+          }
+
+          <button class="action-btn finder-btn" (click)="openFinder()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <span>Optimalen Wohnort finden</span>
+          </button>
+        </div>
       }
 
       <!-- CATEGORY DETAIL VIEW -->
@@ -216,7 +270,7 @@
                     }
                   </div>
                 </div>
-                <div class="result-total-score" [style.color]="getScoreColor(result.totalScore)">
+                <div class="result-total-score" [style.color]="getFinderScoreColor(result.totalScore)">
                   {{ result.totalScore }}
                 </div>
               </button>
