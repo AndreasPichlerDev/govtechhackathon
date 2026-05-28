@@ -1,0 +1,229 @@
+<div class="sidebar" [class.collapsed]="isCollapsed">
+  <button class="toggle-btn" (click)="toggleSidebar()" [attr.aria-label]="isCollapsed ? 'Sidebar öffnen' : 'Sidebar schliessen'">
+    @if (isCollapsed) {
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    } @else {
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
+    }
+  </button>
+
+  @if (!isCollapsed) {
+    <div class="sidebar-content">
+
+      <!-- OVERVIEW VIEW -->
+      @if (currentView === 'overview') {
+        <h2 class="sidebar-title">Siedlungsqualität</h2>
+
+        <!-- Search field for categories -->
+        <div class="search-field">
+          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Infrastruktur durchsuchen..."
+            [(ngModel)]="searchQuery"
+          />
+        </div>
+
+        @if (locationService.address()) {
+          <div class="address-display">
+            <span class="address-label">Standort</span>
+            <span class="address-value">{{ locationService.address() }}</span>
+          </div>
+        }
+
+        <div class="radius-section">
+          <div class="radius-header">
+            <span class="radius-label">Suchradius</span>
+            <span class="radius-value">{{ formatRadius(locationService.radius()) }}</span>
+          </div>
+          <input
+            type="range"
+            class="radius-slider"
+            [min]="100"
+            [max]="3000"
+            [step]="50"
+            [(ngModel)]="radiusValue"
+          />
+          <div class="radius-range">
+            <span>100 m</span>
+            <span>3 km</span>
+          </div>
+        </div>
+
+        <div class="metrics-section">
+          <h3 class="metrics-title">Infrastruktur im Umkreis</h3>
+
+          @for (category of filteredCategories; track category.key) {
+            <div class="metric-card" [class.disabled]="!isCategoryVisible(category.key)">
+              <button class="category-toggle" (click)="toggleCategory(category.key)">
+                <span class="color-dot" [style.background-color]="getCategoryColorStyle(category.color)" [class.dot-inactive]="!isCategoryVisible(category.key)"></span>
+              </button>
+              <button class="metric-content-btn" (click)="openCategoryDetail(category)">
+                <div class="metric-icon">{{ category.icon }}</div>
+                <div class="metric-info">
+                  <span class="metric-label">{{ category.label }}</span>
+                  <span class="metric-value">{{ locationService.metrics()[category.key] }}</span>
+                </div>
+              </button>
+              <button class="visibility-btn" (click)="toggleCategory(category.key)" [attr.aria-label]="'Toggle ' + category.label">
+                @if (isCategoryVisible(category.key)) {
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                } @else {
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                  </svg>
+                }
+              </button>
+            </div>
+          }
+        </div>
+
+        <!-- Wohnort-Finder Button -->
+        <button class="finder-btn" (click)="openFinder()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+          <span>Optimalen Wohnort finden</span>
+        </button>
+      }
+
+      <!-- CATEGORY DETAIL VIEW -->
+      @if (currentView === 'category-detail' && selectedCategory) {
+        <div class="detail-header">
+          <button class="back-btn" (click)="goBack()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+          <div class="detail-title-row">
+            <span class="detail-icon">{{ selectedCategory.icon }}</span>
+            <h2 class="detail-title">{{ selectedCategory.label }}</h2>
+          </div>
+          <span class="detail-count">{{ categoryPois.length }} gefunden</span>
+        </div>
+
+        <!-- Search within category -->
+        <div class="search-field">
+          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input
+            type="text"
+            class="search-input"
+            [placeholder]="'In ' + selectedCategory.label + ' suchen...'"
+            [(ngModel)]="searchQuery"
+          />
+        </div>
+
+        <div class="poi-list">
+          @for (poi of filteredCategoryPois; track poi.name) {
+            <div class="poi-item">
+              <span class="poi-dot" [style.background-color]="getCategoryColorStyle(selectedCategory.color)"></span>
+              <div class="poi-info">
+                <span class="poi-name">{{ poi.name }}</span>
+              </div>
+            </div>
+          }
+          @if (filteredCategoryPois.length === 0) {
+            <div class="empty-state">
+              <span>Keine Ergebnisse gefunden</span>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- WOHNORT-FINDER VIEW -->
+      @if (currentView === 'finder') {
+        <div class="detail-header">
+          <button class="back-btn" (click)="goBack()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+          <h2 class="detail-title">Wohnort-Finder</h2>
+        </div>
+
+        <p class="finder-description">
+          Gewichte, was dir bei der Wohnungssuche wichtig ist. Wir finden den optimalen Standort für dich.
+        </p>
+
+        <div class="preferences-section">
+          @for (pref of finderService.preferences(); track pref.category) {
+            <div class="preference-item" [class.pref-disabled]="!pref.enabled">
+              <div class="pref-header">
+                <button class="pref-toggle" (click)="finderService.togglePreference(pref.category)">
+                  <span class="pref-icon">{{ getCategoryForKey(pref.category)?.icon }}</span>
+                </button>
+                <span class="pref-label">{{ getCategoryForKey(pref.category)?.label }}</span>
+                <span class="pref-weight-label">{{ pref.weight }}%</span>
+              </div>
+              @if (pref.enabled) {
+                <input
+                  type="range"
+                  class="pref-slider"
+                  [min]="0"
+                  [max]="100"
+                  [step]="5"
+                  [value]="pref.weight"
+                  (input)="finderService.setPreferenceWeight(pref.category, $any($event.target).valueAsNumber)"
+                />
+              }
+            </div>
+          }
+        </div>
+
+        <button class="search-btn" (click)="startFinderSearch()" [disabled]="finderService.isSearching()">
+          @if (finderService.isSearching()) {
+            <span class="spinner"></span>
+            <span>Suche läuft...</span>
+          } @else {
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <span>Optimalen Ort suchen</span>
+          }
+        </button>
+
+        <!-- Results -->
+        @if (finderService.hasSearched() && !finderService.isSearching()) {
+          <div class="finder-results">
+            <h3 class="results-title">Top Ergebnisse</h3>
+            @for (result of finderService.results(); track result.address; let i = $index) {
+              <button class="result-card" (click)="selectFinderResult(result)">
+                <div class="result-rank">{{ i + 1 }}</div>
+                <div class="result-info">
+                  <span class="result-address">{{ result.address }}</span>
+                  <div class="result-scores">
+                    @for (pref of finderService.enabledPreferences(); track pref.category) {
+                      <span class="result-score-chip" [style.background-color]="getCategoryColorStyle(getCategoryForKey(pref.category)!.color)" [title]="getCategoryForKey(pref.category)!.label">
+                        {{ getCategoryForKey(pref.category)?.icon }} {{ result.categoryScores[pref.category] }}
+                      </span>
+                    }
+                  </div>
+                </div>
+                <div class="result-total-score" [style.color]="getScoreColor(result.totalScore)">
+                  {{ result.totalScore }}
+                </div>
+              </button>
+            }
+          </div>
+        }
+      }
+    </div>
+  }
+</div>
