@@ -117,8 +117,72 @@
   font-weight: 500;
 }
 
+// Overall score
+.overall-score-section {
+  padding: 14px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 14px;
+}
+
+.overall-score-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.overall-score-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.overall-score-value {
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.score-max {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.score-bar-bg {
+  width: 100%;
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.score-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease, background-color 0.4s ease;
+}
+
+.compare-score-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.compare-score-label {
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+.compare-score-value {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
 .radius-section {
-  margin-bottom: 18px;
+  margin-bottom: 14px;
   padding: 14px;
   background: #f8fafc;
   border-radius: 12px;
@@ -289,6 +353,26 @@
   font-size: 1rem;
   font-weight: 700;
   color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.metric-diff {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 1px 4px;
+  border-radius: 4px;
+
+  &.positive {
+    color: #16a34a;
+    background: #dcfce7;
+  }
+
+  &.negative {
+    color: #dc2626;
+    background: #fee2e2;
+  }
 }
 
 .visibility-btn {
@@ -310,31 +394,64 @@
   }
 }
 
-// Finder button
-.finder-btn {
+// Action buttons
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.action-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   width: 100%;
-  padding: 12px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: white;
+  padding: 10px 12px;
   border: none;
-  border-radius: 12px;
-  font-size: 0.85rem;
+  border-radius: 10px;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
 
   &:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
   }
 
   &:active {
     transform: translateY(0);
+  }
+}
+
+.compare-btn {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+
+  &:hover {
+    background: #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.clear-compare-btn {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+
+  &:hover {
+    background: #fecaca;
+  }
+}
+
+.finder-btn {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+
+  &:hover {
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
   }
 }
 
