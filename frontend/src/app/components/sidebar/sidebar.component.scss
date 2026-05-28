@@ -3,7 +3,7 @@
   top: 16px;
   right: 16px;
   bottom: 16px;
-  width: 340px;
+  width: 360px;
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(20px);
   border-radius: 16px;
@@ -55,7 +55,42 @@
   font-size: 1.25rem;
   font-weight: 700;
   color: #1e293b;
-  margin: 0 0 16px 0;
+  margin: 0 0 14px 0;
+}
+
+// Search field
+.search-field {
+  position: relative;
+  margin-bottom: 14px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 12px 8px 32px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  color: #1e293b;
+  background: #f8fafc;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  }
+
+  &::placeholder {
+    color: #94a3b8;
+  }
 }
 
 .address-display {
@@ -65,7 +100,7 @@
   padding: 12px;
   background: #f1f5f9;
   border-radius: 10px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .address-label {
@@ -83,7 +118,7 @@
 }
 
 .radius-section {
-  margin-bottom: 20px;
+  margin-bottom: 18px;
   padding: 14px;
   background: #f8fafc;
   border-radius: 12px;
@@ -158,7 +193,7 @@
 }
 
 .metrics-section {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .metrics-title {
@@ -167,17 +202,17 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: #64748b;
-  margin: 0 0 12px 0;
+  margin: 0 0 10px 0;
 }
 
 .metric-card {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
+  gap: 8px;
+  padding: 6px 8px;
   border-radius: 10px;
   transition: background 0.2s, opacity 0.2s;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 
   &:hover {
     background: #f1f5f9;
@@ -185,6 +220,24 @@
 
   &.disabled {
     opacity: 0.5;
+  }
+}
+
+.metric-content-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 8px;
+  text-align: left;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #eef2ff;
   }
 }
 
@@ -211,9 +264,9 @@
 }
 
 .metric-icon {
-  font-size: 1.2rem;
-  width: 32px;
-  height: 32px;
+  font-size: 1.1rem;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -228,12 +281,12 @@
 }
 
 .metric-label {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   color: #64748b;
 }
 
 .metric-value {
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 700;
   color: #1e293b;
 }
@@ -255,4 +308,354 @@
     color: #475569;
     background: #f1f5f9;
   }
+}
+
+// Finder button
+.finder-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// Detail view header
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #475569;
+  transition: background 0.2s, color 0.2s;
+
+  &:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+  }
+}
+
+.detail-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.detail-icon {
+  font-size: 1.2rem;
+}
+
+.detail-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.detail-count {
+  font-size: 0.75rem;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+// POI list
+.poi-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.poi-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #f1f5f9;
+  }
+}
+
+.poi-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.poi-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.poi-name {
+  font-size: 0.84rem;
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.empty-state {
+  padding: 24px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+// Finder view
+.finder-description {
+  font-size: 0.82rem;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+
+.preferences-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.preference-item {
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  transition: opacity 0.2s;
+
+  &.pref-disabled {
+    opacity: 0.4;
+  }
+}
+
+.pref-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pref-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.pref-icon {
+  font-size: 1rem;
+}
+
+.pref-label {
+  flex: 1;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.pref-weight-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #6366f1;
+  background: #eef2ff;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.pref-slider {
+  width: 100%;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #e2e8f0;
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  margin-top: 8px;
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #6366f1;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(99, 102, 241, 0.4);
+  }
+
+  &::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #6366f1;
+    cursor: pointer;
+    border: none;
+  }
+}
+
+.search-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  margin-bottom: 16px;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+// Finder results
+.finder-results {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.results-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin: 0 0 8px 0;
+}
+
+.result-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  text-align: left;
+  width: 100%;
+
+  &:hover {
+    background: #eef2ff;
+    border-color: #c7d2fe;
+    transform: translateX(-2px);
+  }
+}
+
+.result-rank {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #6366f1;
+  color: white;
+  border-radius: 50%;
+  font-size: 0.7rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.result-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.result-address {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.result-scores {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.result-score-chip {
+  font-size: 0.65rem;
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: white;
+  font-weight: 600;
+}
+
+.result-total-score {
+  font-size: 1.2rem;
+  font-weight: 800;
+  flex-shrink: 0;
 }

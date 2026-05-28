@@ -11,6 +11,7 @@ export interface PoiPoint {
   position: [number, number];
   category: PoiCategory;
   name: string;
+  distance?: number; // distance from center in meters
 }
 
 export type PoiCategory = 'restaurants' | 'supermarkets' | 'publicTransport' | 'parks' | 'schools' | 'pharmacies';
@@ -38,4 +39,19 @@ export interface LocationData {
   radius: number;
   address?: string;
   metrics: LocationMetrics;
+}
+
+// Wohnort-Finder types
+export interface CategoryPreference {
+  category: PoiCategory;
+  weight: number; // 0-100
+  enabled: boolean;
+}
+
+export interface LocationScore {
+  lat: number;
+  lng: number;
+  address: string;
+  totalScore: number; // 0-100
+  categoryScores: Record<PoiCategory, number>;
 }
