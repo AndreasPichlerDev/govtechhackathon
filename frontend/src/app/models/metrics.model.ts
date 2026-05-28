@@ -41,6 +41,29 @@ export interface LocationData {
   metrics: LocationMetrics;
 }
 
+// Multi-Location Management
+export interface ManagedLocation {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  radius: number;
+  color: string; // hex color
+  metrics: LocationMetrics;
+  isActive: boolean; // currently selected/focused
+}
+
+export const LOCATION_COLORS: string[] = [
+  '#6366f1', // Indigo
+  '#f97316', // Orange
+  '#22c55e', // Green
+  '#ec4899', // Pink
+  '#06b6d4', // Cyan
+  '#eab308', // Yellow
+  '#8b5cf6', // Violet
+  '#14b8a6', // Teal
+];
+
 // Wohnort-Finder types
 export interface CategoryPreference {
   category: PoiCategory;

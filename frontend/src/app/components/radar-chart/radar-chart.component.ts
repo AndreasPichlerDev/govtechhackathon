@@ -1,9 +1,9 @@
 import { Component, OnInit, OnDestroy, ElementRef, ViewChild, inject, effect, HostListener, NgZone } from '@angular/core';
 import { Chart, RadarController, RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend } from 'chart.js';
 import { LocationService } from '../../services/location.service';
-import { CompareService } from '../../services/compare.service';
+import { LocationManagerService } from '../../services/location-manager.service';
 import { LocationFinderService } from '../../services/location-finder.service';
-import { POI_CATEGORIES, PoiCategory } from '../../models/metrics.model';
+import { POI_CATEGORIES, PoiCategory, ManagedLocation } from '../../models/metrics.model';
 
 Chart.register(RadarController, RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
 
@@ -106,7 +106,7 @@ export class RadarChartComponent implements OnInit, OnDestroy {
 
   private chart: Chart | null = null;
   private locationService = inject(LocationService);
-  private compareService = inject(CompareService);
+  private locationManager = inject(LocationManagerService);
   private finderService = inject(LocationFinderService);
   private ngZone = inject(NgZone);
 
@@ -125,7 +125,7 @@ export class RadarChartComponent implements OnInit, OnDestroy {
   // Chart point drag state
   private isDraggingPoint = false;
   private draggedPointIndex = -1;
-  private targetValues: number[] = [50, 50, 50, 50, 50, 50]; // User-desired values (0-100)
+  private targetValues: number[] = [50, 50, 50, 50, 50, 50];
   private searchDebounce: any = null;
 
   // Max values for normalization
@@ -141,7 +141,7 @@ export class RadarChartComponent implements OnInit, OnDestroy {
   constructor() {
     effect(() => {
       const metrics = this.locationService.metrics();
-      const compareLocation = this.compareService.compareLocation();
+      const managedLocations = this.locationManager.locations();
       this.updateChart();
     });
   }
@@ -286,7 +286,6 @@ export class RadarChartComponent implements OnInit, OnDestroy {
     const x = event.touches[0].clientX - rect.left;
     const y = event.touches[0].clientY - rect.top;
 
-    // Check proximity to each point
     const scale = this.chart.scales['r'] as any;
     if (!scale) return -1;
 
@@ -317,12 +316,10 @@ export class RadarChartComponent implements OnInit, OnDestroy {
     const centerX = scale.xCenter;
     const centerY = scale.yCenter;
 
-    // Calculate distance from center
     const dx = mouseX - centerX;
     const dy = mouseY - centerY;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
-    // Convert to value (0-100)
     const maxDist = scale.drawingArea;
     const value = Math.max(0, Math.min(100, Math.round((distance / maxDist) * 100)));
 
@@ -331,23 +328,19 @@ export class RadarChartComponent implements OnInit, OnDestroy {
   }
 
   private triggerLocationSearch(): void {
-    // Debounce the search
     if (this.searchDebounce) clearTimeout(this.searchDebounce);
 
     this.searchDebounce = setTimeout(() => {
-      // Update finder preferences based on dragged values
       for (let i = 0; i < this.categoryKeys.length; i++) {
         this.finderService.setPreferenceWeight(this.categoryKeys[i], this.targetValues[i]);
       }
 
-      // Trigger location search
       const lat = this.locationService.lat();
       const lng = this.locationService.lng();
       const radius = this.locationService.radius();
 
       this.ngZone.run(async () => {
         await this.finderService.findOptimalLocations(lat, lng, radius * 3);
-        // Navigate to best result
         const best = this.finderService.bestResult();
         if (best) {
           this.locationService.updateLocation(best.lat, best.lng, best.address);
@@ -434,7 +427,7 @@ export class RadarChartComponent implements OnInit, OnDestroy {
     if (!this.chart) return;
 
     const metrics = this.locationService.metrics();
-    const compareLocation = this.compareService.compareLocation();
+    const managedLocations = this.locationManager.locations();
 
     const currentData = POI_CATEGORIES.map(cat => {
       const value = metrics[cat.key];
@@ -447,11 +440,14 @@ export class RadarChartComponent implements OnInit, OnDestroy {
       this.targetValues = [...currentData];
     }
 
-    const datasets: any[] = [
-      {
-        label: this.locationService.address() || 'Aktueller Standort',
-        data: this.isDraggingPoint ? this.targetValues : currentData,
-        backgroundColor: this.isDraggingPoint ? 'rgba(99, 102, 241, 0.08)' : 'rgba(99, 102, 241, 0.15)',
+    const datasets: any[] = [];
+
+    // If dragging, show target profile
+    if (this.isDraggingPoint) {
+      datasets.push({
+        label: 'Gewünschtes Profil',
+        data: this.targetValues,
+        backgroundColor: 'rgba(99, 102, 241, 0.08)',
         borderColor: 'rgba(99, 102, 241, 0.85)',
         pointBackgroundColor: POI_CATEGORIES.map((_, i) =>
           i === this.draggedPointIndex ? 'rgba(239, 68, 68, 1)' : 'rgba(99, 102, 241, 1)'
@@ -461,42 +457,41 @@ export class RadarChartComponent implements OnInit, OnDestroy {
         pointRadius: POI_CATEGORIES.map((_, i) =>
           i === this.draggedPointIndex ? 8 : 5
         ),
-      }
-    ];
-
-    // Target outline when dragging
-    if (this.isDraggingPoint) {
-      datasets.unshift({
-        label: 'Gewünschtes Profil',
-        data: this.targetValues,
-        backgroundColor: 'rgba(234, 179, 8, 0.08)',
-        borderColor: 'rgba(234, 179, 8, 0.6)',
-        borderDash: [5, 5],
-        pointBackgroundColor: 'rgba(234, 179, 8, 0.8)',
-        pointBorderColor: '#fff',
-        pointBorderWidth: 1,
-        pointRadius: 4,
       });
-    }
-
-    // Comparison dataset
-    if (compareLocation && !this.isDraggingPoint) {
-      const compareData = POI_CATEGORIES.map(cat => {
-        const value = compareLocation.metrics[cat.key];
-        const max = this.maxValues[cat.key];
-        return Math.min(100, Math.round((value / max) * 100));
-      });
-
+    } else {
+      // Current location dataset
       datasets.push({
-        label: compareLocation.address || 'Vergleichsstandort',
-        data: compareData,
-        backgroundColor: 'rgba(234, 88, 12, 0.12)',
-        borderColor: 'rgba(234, 88, 12, 0.85)',
-        pointBackgroundColor: 'rgba(234, 88, 12, 1)',
+        label: this.locationService.address() || 'Aktueller Standort',
+        data: currentData,
+        backgroundColor: 'rgba(99, 102, 241, 0.15)',
+        borderColor: 'rgba(99, 102, 241, 0.85)',
+        pointBackgroundColor: 'rgba(99, 102, 241, 1)',
         pointBorderColor: '#fff',
-        pointBorderWidth: 1.5,
-        pointRadius: 4,
+        pointBorderWidth: 2,
+        pointRadius: 5,
       });
+
+      // Managed locations datasets (each with its own color)
+      for (const location of managedLocations) {
+        const locData = POI_CATEGORIES.map(cat => {
+          const value = location.metrics[cat.key];
+          const max = this.maxValues[cat.key];
+          return Math.min(100, Math.round((value / max) * 100));
+        });
+
+        const rgb = this.hexToRgb(location.color);
+
+        datasets.push({
+          label: location.name,
+          data: locData,
+          backgroundColor: `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.08)`,
+          borderColor: `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.85)`,
+          pointBackgroundColor: `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 1)`,
+          pointBorderColor: '#fff',
+          pointBorderWidth: 1.5,
+          pointRadius: 4,
+        });
+      }
     }
 
     this.chart.data.datasets = datasets;
@@ -525,5 +520,17 @@ export class RadarChartComponent implements OnInit, OnDestroy {
 
     this.chart.data.datasets = datasets;
     this.chart.update('none');
+  }
+
+  private hexToRgb(hex: string): [number, number, number] {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (result) {
+      return [
+        parseInt(result[1], 16),
+        parseInt(result[2], 16),
+        parseInt(result[3], 16)
+      ];
+    }
+    return [99, 102, 241];
   }
 }

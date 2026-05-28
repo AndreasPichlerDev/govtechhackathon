@@ -48,31 +48,93 @@
           <div class="score-bar-bg">
             <div class="score-bar-fill" [style.width.%]="overallScore * 10" [style.background-color]="getScoreColor(overallScore)"></div>
           </div>
-          @if (compareOverallScore !== null) {
-            <div class="compare-score-row">
-              <span class="compare-score-label">Vergleich:</span>
-              <span class="compare-score-value" [style.color]="getScoreColor(compareOverallScore)">{{ compareOverallScore }}/10</span>
-            </div>
-          }
         </div>
 
-        <div class="radius-section">
-          <div class="radius-header">
-            <span class="radius-label">Suchradius</span>
-            <span class="radius-value">{{ formatRadius(locationService.radius()) }}</span>
+        <!-- Area mode toggle -->
+        <div class="area-mode-section">
+          <div class="area-mode-header">
+            <span class="area-mode-label">Suchbereich</span>
+            <div class="area-mode-toggle">
+              <button class="mode-btn" [class.active]="locationService.areaMode() === 'radius'" (click)="setAreaMode('radius')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                </svg>
+                Radius
+              </button>
+              <button class="mode-btn" [class.active]="locationService.areaMode() === 'polygon'" (click)="startPolygonDrawing()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"></polygon>
+                </svg>
+                Polygon
+              </button>
+            </div>
           </div>
-          <input
-            type="range"
-            class="radius-slider"
-            [min]="100"
-            [max]="3000"
-            [step]="50"
-            [(ngModel)]="radiusValue"
-          />
-          <div class="radius-range">
-            <span>100 m</span>
-            <span>3 km</span>
-          </div>
+
+          @if (locationService.areaMode() === 'radius') {
+            <div class="radius-controls">
+              <div class="radius-header">
+                <span class="radius-label">Suchradius</span>
+                <span class="radius-value">{{ formatRadius(locationService.radius()) }}</span>
+              </div>
+              <input
+                type="range"
+                class="radius-slider"
+                [min]="100"
+                [max]="3000"
+                [step]="50"
+                [(ngModel)]="radiusValue"
+              />
+              <div class="radius-range">
+                <span>100 m</span>
+                <span>3 km</span>
+              </div>
+            </div>
+          }
+
+          @if (locationService.areaMode() === 'polygon') {
+            <div class="polygon-controls">
+              @if (locationService.isDrawing()) {
+                <div class="drawing-hint">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                  </svg>
+                  <span>Klicke auf die Karte um Punkte zu setzen (min. 3)</span>
+                </div>
+                <div class="polygon-point-count">
+                  {{ locationService.polygon().length }} Punkte gesetzt
+                </div>
+                <button class="finish-drawing-btn" (click)="finishDrawing()" [disabled]="locationService.polygon().length < 3">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  Bereich abschliessen
+                </button>
+              } @else {
+                <div class="polygon-info">
+                  <span class="polygon-info-text">Benutzerdefinierter Bereich aktiv</span>
+                  <span class="polygon-info-detail">{{ locationService.polygon().length }} Punkte</span>
+                </div>
+                <div class="polygon-actions">
+                  <button class="redraw-btn" (click)="startPolygonDrawing()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="1 4 1 10 7 10"></polyline>
+                      <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                    </svg>
+                    Neu zeichnen
+                  </button>
+                  <button class="clear-polygon-btn" (click)="clearPolygon()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                    Entfernen
+                  </button>
+                </div>
+              }
+            </div>
+          }
         </div>
 
         <div class="metrics-section">
@@ -87,17 +149,10 @@
                 <div class="metric-icon">{{ category.icon }}</div>
                 <div class="metric-info">
                   <span class="metric-label">{{ category.label }}</span>
-                  <span class="metric-value">
-                    {{ locationService.metrics()[category.key] }}
-                    @if (getDifference(category.key) !== null) {
-                      <span class="metric-diff" [class.positive]="getDifference(category.key)! > 0" [class.negative]="getDifference(category.key)! < 0">
-                        {{ getDifference(category.key)! > 0 ? '+' : '' }}{{ getDifference(category.key) }}
-                      </span>
-                    }
-                  </span>
+                  <span class="metric-value">{{ locationService.metrics()[category.key] }}</span>
                 </div>
               </button>
-              <button class="visibility-btn" (click)="toggleCategory(category.key)" [attr.aria-label]="'Toggle ' + category.label">
+              <button class="visibility-btn" (click)="toggleCategory(category.key)">
                 @if (isCategoryVisible(category.key)) {
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -116,35 +171,21 @@
 
         <!-- Action buttons -->
         <div class="action-buttons">
-          <button class="action-btn compare-btn" (click)="saveCurrentAsCompare()">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M16 3h5v5"></path>
-              <line x1="4" y1="20" x2="21" y2="3"></line>
-              <path d="M21 16v5h-5"></path>
-              <line x1="15" y1="15" x2="21" y2="21"></line>
-              <line x1="4" y1="4" x2="9" y2="9"></line>
-            </svg>
-            @if (compareService.hasComparison()) {
-              <span>Vergleich aktualisieren</span>
-            } @else {
-              <span>Als Vergleich speichern</span>
-            }
-          </button>
-
-          @if (compareService.hasComparison()) {
-            <button class="action-btn clear-compare-btn" (click)="compareService.clearComparison()">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-              <span>Vergleich entfernen</span>
-            </button>
-          }
-
-          <button class="action-btn finder-btn" (click)="openFinder()">
+          <button class="action-btn locations-btn" (click)="openLocations()">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
               <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <span>Standorte verwalten</span>
+            @if (locationManager.hasLocations()) {
+              <span class="location-count-badge">{{ locationManager.getLocationCount() }}</span>
+            }
+          </button>
+
+          <button class="action-btn finder-btn" (click)="openFinder()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
             <span>Optimalen Wohnort finden</span>
           </button>
@@ -166,7 +207,6 @@
           <span class="detail-count">{{ categoryPois.length }} gefunden</span>
         </div>
 
-        <!-- Search within category -->
         <div class="search-field">
           <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="11" cy="11" r="8"></circle>
@@ -190,8 +230,125 @@
             </div>
           }
           @if (filteredCategoryPois.length === 0) {
+            <div class="empty-state">Keine Ergebnisse gefunden</div>
+          }
+        </div>
+      }
+
+      <!-- LOCATIONS MANAGEMENT VIEW -->
+      @if (currentView === 'locations') {
+        <div class="detail-header">
+          <button class="back-btn" (click)="goBack()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+          <h2 class="detail-title">Standorte verwalten</h2>
+        </div>
+
+        <p class="locations-description">
+          Verwalte mehrere Standorte zum Vergleichen. Jeder Standort erscheint im Radar-Chart mit seiner eigenen Farbe.
+        </p>
+
+        <!-- Add location buttons -->
+        <div class="add-location-actions">
+          <button class="add-location-btn" (click)="addCurrentAsLocation()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Aktuellen Standort hinzufügen
+          </button>
+          <button class="drop-marker-btn" (click)="dropNewMarker()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            Neuen Marker setzen
+          </button>
+        </div>
+
+        <!-- Location list -->
+        <div class="location-list">
+          @for (location of locationManager.locations(); track location.id) {
+            <div class="location-card" [class.active]="location.isActive" [style.border-left-color]="location.color">
+
+              <!-- Header with name and actions -->
+              <div class="location-card-header">
+                @if (editingLocationId === location.id) {
+                  <input
+                    type="text"
+                    class="location-name-input"
+                    [(ngModel)]="editingName"
+                    (keyup.enter)="saveLocationName(location.id)"
+                    (blur)="saveLocationName(location.id)"
+                  />
+                } @else {
+                  <button class="location-name-btn" (click)="selectLocation(location)">
+                    <span class="location-color-indicator" [style.background-color]="location.color"></span>
+                    <span class="location-name">{{ location.name }}</span>
+                  </button>
+                  <button class="edit-name-btn" (click)="startEditingName(location)" title="Name bearbeiten">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  </button>
+                }
+                <button class="remove-location-btn" (click)="removeLocation(location.id)" title="Entfernen">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Score -->
+              <div class="location-score-row">
+                <span class="location-score-label">Score:</span>
+                <span class="location-score-value" [style.color]="getScoreColor(getLocationScore(location))">
+                  {{ getLocationScore(location) }}/10
+                </span>
+              </div>
+
+              <!-- Color picker -->
+              <div class="location-color-picker">
+                <span class="color-picker-label">Farbe:</span>
+                <div class="color-options">
+                  @for (color of availableColors; track color) {
+                    <button
+                      class="color-option"
+                      [style.background-color]="color"
+                      [class.selected]="location.color === color"
+                      (click)="setLocationColor(location.id, color)"
+                    ></button>
+                  }
+                </div>
+              </div>
+
+              <!-- Radius slider -->
+              <div class="location-radius">
+                <div class="location-radius-header">
+                  <span class="location-radius-label">Radius:</span>
+                  <span class="location-radius-value">{{ formatRadius(location.radius) }}</span>
+                </div>
+                <input
+                  type="range"
+                  class="location-radius-slider"
+                  [min]="100"
+                  [max]="3000"
+                  [step]="50"
+                  [value]="location.radius"
+                  (input)="setLocationRadius(location.id, $any($event.target).valueAsNumber)"
+                />
+              </div>
+            </div>
+          }
+
+          @if (!locationManager.hasLocations()) {
             <div class="empty-state">
-              <span>Keine Ergebnisse gefunden</span>
+              <p>Noch keine Standorte gespeichert.</p>
+              <p class="empty-hint">Füge Standorte hinzu um sie im Radar-Chart zu vergleichen.</p>
             </div>
           }
         </div>
@@ -250,7 +407,6 @@
           }
         </button>
 
-        <!-- Results -->
         @if (finderService.hasSearched() && !finderService.isSearching()) {
           <div class="finder-results">
             <h3 class="results-title">Top Ergebnisse</h3>
@@ -261,7 +417,7 @@
                   <span class="result-address">{{ result.address }}</span>
                   <div class="result-scores">
                     @for (pref of finderService.enabledPreferences(); track pref.category) {
-                      <span class="result-score-chip" [style.background-color]="getCategoryColorStyle(getCategoryForKey(pref.category)!.color)" [title]="getCategoryForKey(pref.category)!.label">
+                      <span class="result-score-chip" [style.background-color]="getCategoryColorStyle(getCategoryForKey(pref.category)!.color)">
                         {{ getCategoryForKey(pref.category)?.icon }} {{ result.categoryScores[pref.category] }}
                       </span>
                     }

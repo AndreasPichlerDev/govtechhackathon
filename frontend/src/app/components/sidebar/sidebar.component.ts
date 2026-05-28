@@ -1,11 +1,11 @@
-import { Component, inject, computed } from '@angular/core';
-import { LocationService } from '../../services/location.service';
+import { Component, inject } from '@angular/core';
+import { LocationService, AreaMode } from '../../services/location.service';
 import { LocationFinderService } from '../../services/location-finder.service';
-import { CompareService } from '../../services/compare.service';
-import { PoiCategory, PoiCategoryConfig, PoiPoint, LocationScore, POI_CATEGORIES } from '../../models/metrics.model';
+import { LocationManagerService } from '../../services/location-manager.service';
+import { PoiCategory, PoiCategoryConfig, PoiPoint, LocationScore, ManagedLocation, POI_CATEGORIES, LOCATION_COLORS } from '../../models/metrics.model';
 import { FormsModule } from '@angular/forms';
 
-type SidebarView = 'overview' | 'category-detail' | 'finder' | 'compare';
+type SidebarView = 'overview' | 'category-detail' | 'finder' | 'locations';
 
 @Component({
   selector: 'app-sidebar',
@@ -17,7 +17,7 @@ type SidebarView = 'overview' | 'category-detail' | 'finder' | 'compare';
 export class SidebarComponent {
   protected locationService = inject(LocationService);
   protected finderService = inject(LocationFinderService);
-  protected compareService = inject(CompareService);
+  protected locationManager = inject(LocationManagerService);
   protected isCollapsed = false;
 
   // View state
@@ -26,6 +26,13 @@ export class SidebarComponent {
 
   // Search/filter
   protected searchQuery = '';
+
+  // Location editing
+  protected editingLocationId: string | null = null;
+  protected editingName = '';
+
+  // Available colors
+  protected availableColors = LOCATION_COLORS;
 
   // Max values for normalization
   private readonly maxValues: Record<string, number> = {
@@ -63,29 +70,6 @@ export class SidebarComponent {
     }
 
     if (count === 0) return 0;
-    return Math.round((totalNormalized / count) * 10 * 10) / 10; // 1 decimal
-  }
-
-  // Compare location overall score
-  protected get compareOverallScore(): number | null {
-    const compare = this.compareService.compareLocation();
-    if (!compare) return null;
-
-    const visibility = this.locationService.categoryVisibility();
-    let totalNormalized = 0;
-    let count = 0;
-
-    for (const cat of POI_CATEGORIES) {
-      if (visibility[cat.key]) {
-        const value = compare.metrics[cat.key];
-        const max = this.maxValues[cat.key];
-        const normalized = Math.min(1, value / max);
-        totalNormalized += normalized;
-        count++;
-      }
-    }
-
-    if (count === 0) return null;
     return Math.round((totalNormalized / count) * 10 * 10) / 10;
   }
 
@@ -141,9 +125,9 @@ export class SidebarComponent {
     this.searchQuery = '';
   }
 
-  // Navigate to compare view
-  openCompare(): void {
-    this.currentView = 'compare';
+  // Navigate to locations management view
+  openLocations(): void {
+    this.currentView = 'locations';
     this.searchQuery = '';
   }
 
@@ -152,18 +136,97 @@ export class SidebarComponent {
     this.currentView = 'overview';
     this.selectedCategory = null;
     this.searchQuery = '';
+    this.editingLocationId = null;
   }
 
-  // Save current location as comparison
-  saveCurrentAsCompare(): void {
+  // === Location Management ===
+
+  addCurrentAsLocation(): void {
     const lat = this.locationService.lat();
     const lng = this.locationService.lng();
-    const address = this.locationService.address() || 'Unbenannter Standort';
+    const address = this.locationService.address() || undefined;
     const radius = this.locationService.radius();
-    this.compareService.setCompareLocation(lat, lng, address, radius);
+    this.locationManager.addLocation(lat, lng, address, radius);
   }
 
-  // Wohnort-Finder: start search
+  dropNewMarker(): void {
+    // Add a location slightly offset from center for visibility
+    const lat = this.locationService.lat() + (Math.random() - 0.5) * 0.005;
+    const lng = this.locationService.lng() + (Math.random() - 0.5) * 0.005;
+    const radius = this.locationService.radius();
+    this.locationManager.addLocation(lat, lng, undefined, radius);
+  }
+
+  removeLocation(id: string): void {
+    this.locationManager.removeLocation(id);
+    if (this.editingLocationId === id) {
+      this.editingLocationId = null;
+    }
+  }
+
+  selectLocation(location: ManagedLocation): void {
+    this.locationManager.setActiveLocation(location.id);
+    this.locationService.updateLocation(location.lat, location.lng, location.name);
+    this.locationService.setRadius(location.radius);
+  }
+
+  startEditingName(location: ManagedLocation): void {
+    this.editingLocationId = location.id;
+    this.editingName = location.name;
+  }
+
+  saveLocationName(id: string): void {
+    if (this.editingName.trim()) {
+      this.locationManager.updateLocationName(id, this.editingName.trim());
+    }
+    this.editingLocationId = null;
+  }
+
+  setLocationColor(id: string, color: string): void {
+    this.locationManager.updateLocationColor(id, color);
+  }
+
+  setLocationRadius(id: string, radius: number): void {
+    this.locationManager.updateLocationRadius(id, radius);
+  }
+
+  getLocationScore(location: ManagedLocation): number {
+    const visibility = this.locationService.categoryVisibility();
+    let totalNormalized = 0;
+    let count = 0;
+
+    for (const cat of POI_CATEGORIES) {
+      if (visibility[cat.key]) {
+        const value = location.metrics[cat.key];
+        const max = this.maxValues[cat.key];
+        const normalized = Math.min(1, value / max);
+        totalNormalized += normalized;
+        count++;
+      }
+    }
+
+    if (count === 0) return 0;
+    return Math.round((totalNormalized / count) * 10 * 10) / 10;
+  }
+
+  // === Area mode ===
+  setAreaMode(mode: AreaMode): void {
+    this.locationService.setAreaMode(mode);
+  }
+
+  startPolygonDrawing(): void {
+    this.locationService.startDrawing();
+  }
+
+  finishDrawing(): void {
+    this.locationService.finishDrawing();
+  }
+
+  clearPolygon(): void {
+    this.locationService.clearPolygon();
+  }
+
+  // === Finder ===
   async startFinderSearch(): Promise<void> {
     const lat = this.locationService.lat();
     const lng = this.locationService.lng();
@@ -171,11 +234,11 @@ export class SidebarComponent {
     await this.finderService.findOptimalLocations(lat, lng, radius * 3);
   }
 
-  // Navigate to a finder result on the map
   selectFinderResult(result: LocationScore): void {
     this.locationService.updateLocation(result.lat, result.lng, result.address);
   }
 
+  // === Helpers ===
   formatRadius(value: number): string {
     if (value >= 1000) {
       return `${(value / 1000).toFixed(1)} km`;
@@ -203,11 +266,5 @@ export class SidebarComponent {
 
   getCategoryForKey(key: PoiCategory): PoiCategoryConfig | undefined {
     return POI_CATEGORIES.find(c => c.key === key);
-  }
-
-  getDifference(category: PoiCategory): number | null {
-    const diff = this.compareService.getMetricsDifference(this.locationService.metrics());
-    if (!diff) return null;
-    return diff[category];
   }
 }
