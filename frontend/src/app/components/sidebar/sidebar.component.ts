@@ -4,14 +4,13 @@ import { LocationFinderService } from '../../services/location-finder.service';
 import { CompareService } from '../../services/compare.service';
 import { PoiCategory, PoiCategoryConfig, PoiPoint, LocationScore, POI_CATEGORIES } from '../../models/metrics.model';
 import { FormsModule } from '@angular/forms';
-import { RadarChartComponent } from '../radar-chart/radar-chart.component';
 
 type SidebarView = 'overview' | 'category-detail' | 'finder' | 'compare';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [FormsModule, RadarChartComponent],
+  imports: [FormsModule],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss'
 })
